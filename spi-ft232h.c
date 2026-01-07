@@ -534,7 +534,7 @@ static int ftdi_spi_probe(struct platform_device *pdev)
 	    !pd->ops->gpio_direction_output)
 		return -EINVAL;
 
-	master = spi_alloc_master(&pdev->dev, sizeof(*priv));
+	master = spi_alloc_host(&pdev->dev, sizeof(*priv));
 	if (!master)
 		return -ENOMEM;
 
@@ -1367,7 +1367,7 @@ static int ft232h_intf_probe(struct usb_interface *intf,
 	usb_control_msg(priv->udev, usb_sndctrlpipe(priv->udev, 0),
 		0, 0x40, 0, priv->index, NULL, 0, 5000);
 
-	priv->id = ida_simple_get(&ftdi_devid_ida, 0, 0, GFP_KERNEL);
+	priv->id = ida_alloc(&ftdi_devid_ida, GFP_KERNEL);
 	if (priv->id < 0)
 		return priv->id;
 
@@ -1380,7 +1380,7 @@ static int ft232h_intf_probe(struct usb_interface *intf,
 
 	return 0;
 err:
-	ida_simple_remove(&ftdi_devid_ida, priv->id);
+	ida_free(&ftdi_devid_ida, priv->id);
 	return ret;
 }
 
@@ -1401,7 +1401,7 @@ static void ft232h_intf_disconnect(struct usb_interface *intf)
 	mutex_unlock(&priv->io_mutex);
 
 	usb_put_dev(priv->udev);
-	ida_simple_remove(&ftdi_devid_ida, priv->id);
+	ida_free(&ftdi_devid_ida, priv->id);
 
 	mutex_destroy(&priv->io_mutex);
 	mutex_destroy(&priv->ops_mutex);
